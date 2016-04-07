@@ -67,7 +67,7 @@ if [ $(dpkg -l|grep lxc|wc -l) -eq 0 ]
 fi
 echo "lxc installed..."
 
-if [ $(lxc-list|grep lxccu|wc -l) -eq 0 ]
+if [ $(lxc-ls|grep lxccu|wc -l) -eq 0 ]
   then
   echo "lxccu not installed, aborting"
   exit 3
@@ -261,6 +261,7 @@ else
   fi
   sleep 2
 fi
+
 ;;
 *)
   echo "usage: $0 install / uninstall" >&2
