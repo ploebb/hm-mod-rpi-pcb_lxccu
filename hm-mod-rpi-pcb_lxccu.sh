@@ -9,18 +9,19 @@ backupdir="/root/backup/enable-hm-mot-rpi-pcp/"
 backupdirtmp="/root/backup/enable-hm-mot-rpi-pcp-tmp/"
 sfn="/etc/init.d/hm-mod-rpi-pcb"
 
-if [ $(cat /etc/*-release|grep wheezy|wc -l) -eq 0 ]
-  then
-  echo "not an wheezy distribution, aborting..."
-  exit 1
-fi
 if [ $(cat /etc/*-release|grep raspbian|wc -l) -eq 0 ]
   then
   echo "not an raspbian distribution, aborting..."
   exit 1
 fi
-echo "startet on an raspbian whit wheezy..."
-echo "-------------------------------------"
+# if [ $(cat /etc/*-release|grep wheezy|wc -l) -eq 0 ]
+  # then
+  # echo "not an wheezy distribution, aborting..."
+  # exit 1
+# fi
+
+echo "startet on raspbian"
+echo "--------------------"
 
 case "$1" in
   uninstall)
@@ -97,23 +98,39 @@ fi
 
 if [ $(lxc-info -n lxccu|grep RUNNING|wc -l) -eq 1 ]
   then
-  echo "stop lxccu if it is running"
+  echo "stop lxccu if it is running (can take a while)"
   lxc-stop -n lxccu
   sleep 2
 fi
 
-if [ $(cat /etc/inittab|grep "#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100"|wc -l) -eq 0 ]
-  then
-  echo "disable serial console in /etc/inittab"
-  sed -i 's/T0:23:respawn:\/sbin\/getty -L ttyAMA0 115200 vt100/#T0:23:respawn:\/sbin\/getty -L ttyAMA0 115200 vt100/g' /etc/inittab
-  sleep 2
+# if [ $(cat /etc/inittab|grep "#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100"|wc -l) -eq 0 ]
+  # then
+  # echo "disable serial console in /etc/inittab"
+  # sed -i 's/T0:23:respawn:\/sbin\/getty -L ttyAMA0 115200 vt100/#T0:23:respawn:\/sbin\/getty -L ttyAMA0 115200 vt100/g' /etc/inittab
+  # sleep 2
+# fi
+# if [ $(cat /boot/cmdline.txt|grep "console=ttyAMA0,115200"|wc -l) -eq 1 ]
+  # then
+  # echo "disable serial console in /boot/cmdline.txt"
+  # sed -i 's/ console=ttyAMA0,115200//g' /boot/cmdline.txt
+  # sleep 2
+# fi 
+
+# disable serial console
+# code from official rpi-config. should work on both wheezy and jessie
+if command -v systemctl > /dev/null && systemctl | grep -q '\-\.mount'; then
+    SYSTEMD=1
+elif [ -f /etc/init.d/cron ] && [ ! -h /etc/init.d/cron ]; then
+    SYSTEMD=0
+else
+    echo "Warning: Unrecognised init system"
 fi
-if [ $(cat /boot/cmdline.txt|grep "console=ttyAMA0,115200"|wc -l) -eq 1 ]
-  then
-  echo "disable serial console in /boot/cmdline.txt"
-  sed -i 's/ console=ttyAMA0,115200//g' /boot/cmdline.txt
-  sleep 2
-fi 
+if [ $SYSTEMD -eq 0 ]; then
+    sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
+fi
+sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
+sed -i /boot/cmdline.txt -e "s/console=serial0,[0-9]\+ //"
+
 
 if [ $(cat /var/lib/lxc/lxccu/root/www/api/methods/bidcosrf/setconfiguration-rf.tcl|grep "#puts \$fd \"Type = CCU2\""|wc -l) -eq 1 ]
   then
