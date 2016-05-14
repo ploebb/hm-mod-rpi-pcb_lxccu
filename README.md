@@ -1,2 +1,2 @@
-Stand: funktioniert noch nicht.
-Coprocessor kann nicht gestartet werden. -> Evtl Problem mit uart?
+Stand: deprecated!  
+Besser: https://github.com/leonsio/YAHM
